@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <link rel="stylesheet" href="./style/quiz.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiz - Refúgio Vista da Montanha</title>
+</head>
+
+<body>
+    <script src="./resources/questions.js"></script>
+    <div class="quiz-header">
+        <img src="./resources/hotel/logo.webp" alt="Logo do Hotel" class="quiz-logo">
+        <span class="quiz-title">Quiz - Refúgio Vista da Montanha</span>
+    </div>
+    <form id="quizForm"></form>
+
+    <script>
+        const form = document.getElementById("quizForm");
+
+        getQuestions().forEach((q, i) => {
+            const questionDiv = document.createElement("div");
+            questionDiv.classList.add("question");
+            questionDiv.innerHTML = `<h2>${i + 1}. ${q.question}</h2>`;
+
+            const optionsDiv = document.createElement("div");
+            optionsDiv.classList.add("options");
+
+            if (q.type === "text") {
+                q.options.forEach(option => {
+                    const opt = document.createElement("div");
+                    opt.className = "option";
+                    opt.dataset.value = option.label;
+                    opt.innerText = option.label;
+                    optionsDiv.appendChild(opt);
+                });
+            } else if (q.type === "fill") {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.name = `pergunta_${i}`;
+                optionsDiv.appendChild(input);
+            } else if (q.type === "image") {
+                q.options.forEach(option => {
+                    const opt = document.createElement("div");
+                    opt.className = "option image-option";
+                    opt.dataset.value = option.label;
+                    opt.innerHTML = `
+                        <img src="${option.image}" alt="${option.label}">
+                        <div>${option.label}</div>
+                    `;
+
+                    optionsDiv.appendChild(opt);
+                });
+            }
+
+            questionDiv.appendChild(optionsDiv);
+            form.appendChild(questionDiv);
+        });
+
+        const button = document.createElement("button");
+        button.type = "submit";
+        button.textContent = "Responder";
+        form.appendChild(button);
+
+        // Clique nas opções
+        form.addEventListener("click", (e) => {
+            if (e.target.closest(".option")) {
+                const opt = e.target.closest(".option");
+                const group = opt.parentElement.querySelectorAll(".option");
+                group.forEach(o => o.classList.remove("selected"));
+                opt.classList.add("selected");
+            }
+        });
+
+        // Enviar formulário
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            // Coleta respostas (caso queira usar depois)
+            const respostas = {};
+            document.querySelectorAll(".question").forEach((q, i) => {
+                const selected = q.querySelector(".option.selected");
+                respostas[`Pergunta ${i + 1}`] = selected ? selected.dataset.value : "Não respondida";
+            });
+
+            // Remove formulário e botão
+            form.innerHTML = "";
+
+            // Cria nova mensagem
+            const messageDiv = document.createElement("div");
+            messageDiv.style.background = "#fff";
+            messageDiv.style.padding = "2rem";
+            messageDiv.style.borderRadius = "8px";
+            messageDiv.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.15)";
+            messageDiv.style.textAlign = "center";
+            messageDiv.style.marginTop = "2rem";
+
+            messageDiv.innerHTML = `
+                <h2 style="color: #007bff;">Quase lá!</h2>
+                <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">
+                    Para uma melhor visualização, gire seu celular para o modo paisagem (deitado).
+                </p>
+                <button id="continueButton" style="
+                    padding: 0.75rem 2rem;
+                    font-size: 1rem;
+                    background-color: #28a745;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                ">Prosseguir</button>
+            `;
+
+            document.body.appendChild(messageDiv);
+
+            // Ação do botão "Prosseguir"
+            document.getElementById("continueButton").addEventListener("click", () => {
+                messageDiv.innerHTML = `
+                    <h2 style="color: #28a745;">Obrigado por participar!</h2>
+                    <p style="font-size: 1.1rem;">Suas respostas foram registradas com sucesso.</p>
+                `;
+            });
+        });
+    </script>
+</body>
+
+</html>

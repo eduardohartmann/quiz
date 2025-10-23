@@ -4,6 +4,7 @@ function createQuiz() {
 
     // Cria a div principal
     const quizHeader = document.createElement('div');
+    quizHeader.id = "quiz";
     quizHeader.classList.add('quiz-header');
 
     // Cria a imagem
@@ -17,17 +18,17 @@ function createQuiz() {
     title.classList.add('quiz-title');
     title.textContent = 'Quiz - Refúgio Vista da Montanha';
 
-    // Adiciona a imagem e o título dentro da div
-    quizHeader.appendChild(logo);
-    quizHeader.appendChild(title);
-
     // Cria o formulário
     const quizForm = document.createElement('form');
     quizForm.id = 'quizForm';
 
+    // Adiciona a imagem e o título dentro da div
+    quizHeader.appendChild(logo);
+    quizHeader.appendChild(title);
+    quizHeader.appendChild(quizForm);
+
     // Finalmente, adiciona tudo no body
     document.body.appendChild(quizHeader);
-    document.body.appendChild(quizForm);
 
     getQuestions().forEach((q, i) => {
         const questionDiv = document.createElement("div");
@@ -99,6 +100,7 @@ function createQuiz() {
 
         // Cria nova mensagem
         const messageDiv = document.createElement("div");
+        messageDiv.id = "messageDiv";
         messageDiv.style.background = "#fff";
         messageDiv.style.padding = "2rem";
         messageDiv.style.borderRadius = "8px";
@@ -109,9 +111,9 @@ function createQuiz() {
         messageDiv.innerHTML = `
             <h2 style="color: #007bff;">Quase lá!</h2>
             <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">
-                Para uma melhor visualização, gire seu celular para o modo paisagem (deitado).
+                Agora quero contar uma história através de um jogo!
             </p>
-            <button id="continueButton" style="
+            <button id="playButton" style="
                 padding: 0.75rem 2rem;
                 font-size: 1rem;
                 background-color: #28a745;
@@ -119,17 +121,14 @@ function createQuiz() {
                 border: none;
                 border-radius: 6px;
                 cursor: pointer;
-            ">Prosseguir</button>
+            ">Jogar</button>
         `;
 
         document.body.appendChild(messageDiv);
 
         // Ação do botão "Prosseguir"
-        document.getElementById("continueButton").addEventListener("click", () => {
-            messageDiv.innerHTML = `
-                <h2 style="color: #28a745;">Obrigado por participar!</h2>
-                <p style="font-size: 1.1rem;">Suas respostas foram registradas com sucesso.</p>
-            `;
+        document.getElementById("playButton").addEventListener("click", () => {
+            startGame();
         });
     });
 }

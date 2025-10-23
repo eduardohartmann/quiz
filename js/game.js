@@ -56,7 +56,20 @@ class GameScene extends Phaser.Scene {
         this.load.image('coracao', 'resources/game/items/coracao.png');
 
         // Itens especiais
-        this.load.image('mensagem-msn', 'resources/game/items/mensagem-msn.png');
+        this.load.image('especial-1', 'resources/game/items/especial-1.png');
+        this.load.image('especial-2', 'resources/game/items/especial-2.jpg');
+        this.load.image('especial-3', 'resources/game/items/especial-3.jpg');
+        this.load.image('especial-4', 'resources/game/items/especial-4.jpg');
+        this.load.image('especial-5', 'resources/game/items/especial-5.jpg');
+        this.load.image('especial-6', 'resources/game/items/especial-6.png');
+        this.load.image('especial-7', 'resources/game/items/especial-7.jpg');
+        this.load.image('especial-8', 'resources/game/items/especial-8.jpg');
+        this.load.image('especial-9', 'resources/game/items/especial-9.jpg');
+        this.load.image('especial-10', 'resources/game/items/especial-10.jpg');
+        this.load.image('especial-11', 'resources/game/items/especial-11.heic');
+        this.load.image('especial-12', 'resources/game/items/especial-12.jpg');
+        this.load.image('especial-13', 'resources/game/items/especial-13.jpg');
+        this.load.image('especial-14', 'resources/game/items/especial-14.jpg');
     }
 
     create() {
@@ -99,7 +112,20 @@ class GameScene extends Phaser.Scene {
 
         // Gatilhos para itens especiais
         this.specialItemTriggers = [
-            { score: 5, key: 'mensagem-msn', shown: false, message: 'Após muitas mensagem e aproximação, abrimos nosso coração!' }
+            { score: 5, key: 'especial-1', shown: false, message: 'Após muitas mensagens e aproximação, abrimos nosso coração!' },
+            { score: 10, key: 'especial-2', shown: false, message: 'Algumas mensagens no caderno' },
+            { score: 15, key: 'especial-3', shown: false, message: 'Nossa primeira foto' },
+            { score: 20, key: 'especial-4', shown: false, message: 'Talvez a primeira viagem (como eu era feio)' },
+            { score: 25, key: 'especial-5', shown: false, message: 'Participamos de várias festas aleatórias' },
+            { score: 30, key: 'especial-6', shown: false, message: 'Entramos na UDESC' },
+            { score: 35, key: 'especial-7', shown: false, message: 'Saimos da UDESC' },
+            { score: 40, key: 'especial-8', shown: false, message: 'Começamos a ganhar dinheiro e ir mais longe' },
+            { score: 45, key: 'especial-9', shown: false, message: 'Compramos nosso partamento' },
+            { score: 50, key: 'especial-10', shown: false, message: 'Vimos ele ser construido' },
+            { score: 55, key: 'especial-11', shown: false, message: 'Passamos nosso primeiro natal' },
+            { score: 60, key: 'especial-12', shown: false, message: 'Adotamos um anjo' },
+            { score: 65, key: 'especial-13', shown: false, message: 'Será que é um anjo?' },
+            { score: 70, key: 'especial-14', shown: false, message: 'E agora? Qual é o próximo passo?' }
         ];
 
         // Geração contínua de itens
@@ -262,7 +288,7 @@ class GameScene extends Phaser.Scene {
 
         // Texto abaixo da imagem
         const modalText = this.add.text(this.scale.width / 2, this.scale.height / 2 + maxModalHeight * 0.25, message, {
-            fontSize: '20px',
+            fontSize: '15px',
             fill: '#000',
             align: 'center',
             wordWrap: { width: maxModalWidth * 0.9 }

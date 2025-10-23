@@ -159,6 +159,10 @@ const config = {
             debug: false
         }
     },
+    scale: {
+        mode: Phaser.Scale.RESIZE, // para o canvas ajustar junto com o tamanho da tela
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    },
     scene: [MenuScene, GameScene]
 };
 

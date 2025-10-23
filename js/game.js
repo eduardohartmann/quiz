@@ -1,110 +1,171 @@
+class MenuScene extends Phaser.Scene {
+    constructor() {
+        super('MenuScene');
+    }
+
+    preload() {
+        this.load.image('pudim', 'resources/game/character/pudim.png');
+        this.load.image('cueio', 'resources/game/character/cueio.png');
+    }
+
+    create() {
+        this.add.text(this.scale.width / 2, 50, 'Escolha seu personagem', { fontSize: '32px', fill: '#000' }).setOrigin(0.5);
+
+        // Criar dois retângulos (sprites) coloridos para escolher
+        // const option1 = this.add.rectangle(this.scale.width / 3, this.scale.height / 2, 100, 100, 0x0000ff).setInteractive();
+        // const option2 = this.add.rectangle((this.scale.width / 3) * 2, this.scale.height / 2, 100, 100, 0xff0000).setInteractive();
+
+        const option1 = this.add.image(this.scale.width / 3, this.scale.height / 2, 'pudim').setInteractive();
+        const option2 = this.add.image((this.scale.width / 3) * 2, this.scale.height / 2, 'cueio').setInteractive();
+
+        // Se quiser, ajustar escala das imagens para caber
+        option1.setDisplaySize(200, 150);
+        option2.setDisplaySize(150, 165);
+
+        option1.on('pointerdown', () => {
+            this.scene.start('GameScene', { playerImage: 'pudim' });
+        });
+
+        option2.on('pointerdown', () => {
+            this.scene.start('GameScene', { playerImage: 'cueio' });
+        });
+    }
+}
+
 class GameScene extends Phaser.Scene {
     constructor() {
         super('GameScene');
     }
 
+    init(data) {
+        this.playerImageKey = data.playerImage || 'pudim'; // imagem padrão
+    }
+
+    preload() {
+        this.load.image('pudim', 'resources/game/character/pudim.png');
+        this.load.image('cueio', 'resources/game/character/cueio.png');
+    }
+
     create() {
-        // chão — retângulo verde estático que vamos mover manualmente
-        this.ground = this.add.rectangle(400, 580, 1600, 40, 0x00aa00);
-        this.physics.add.existing(this.ground, true);
+        // Fundo azul claro
+        this.cameras.main.setBackgroundColor('#87CEEB');
 
-        // personagem — retângulo vermelho fixo na tela
-        this.player = this.add.rectangle(150, 450, 32, 48, 0xff0000);
-        this.physics.add.existing(this.player);
-        this.player.body.setCollideWorldBounds(true);
-        this.player.body.allowGravity = false; // personagem "fixo" verticalmente
+        // Criar chão
+        const groundGraphics = this.add.graphics();
+        groundGraphics.fillStyle(0x654321, 1);
+        groundGraphics.fillRect(0, 0, this.scale.width * 2, 50);
+        groundGraphics.generateTexture('ground', this.scale.width * 2, 50);
+        groundGraphics.destroy();
 
-        // grupo de itens — círculos azuis que aparecem vindo da direita e se movem para esquerda
+        this.ground = this.add.tileSprite(0, this.scale.height - 50, this.scale.width * 2, 50, 'ground').setOrigin(0);
+
+        // Criar player com a cor escolhida
+        // const playerGraphics = this.add.graphics();
+        // playerGraphics.fillStyle(this.playerColor, 1);
+        // playerGraphics.fillRect(0, 0, 50, 50);
+        // playerGraphics.generateTexture('playerTexture', 50, 50);
+        // playerGraphics.destroy();
+
+        this.player = this.physics.add.sprite(100, this.scale.height - 100, this.playerImageKey);
+        this.player.setCollideWorldBounds(true);
+
+        // se quiser ajustar o tamanho do player, pode usar setScale ou setDisplaySize
+        this.player.setDisplaySize(50, 50);
+
+        // Grupo de itens
         this.items = this.physics.add.group();
 
-        // Score e texto
-        this.score = 0;
-        this.scoreText = this.add.text(16, 16, 'Itens: 0', { fontSize: '32px', fill: '#000' });
+        // Chão com física estática para colisão
+        this.groundPhysics = this.physics.add.staticSprite(this.scale.width / 2, this.scale.height - 25, 'ground');
+        this.groundPhysics.setSize(this.scale.width * 2, 50).setVisible(false);
+        this.physics.add.collider(this.player, this.groundPhysics);
 
-        // Tempo limite
-        this.timeLeft = 30;
-        this.timerText = this.add.text(600, 16, `Tempo: ${this.timeLeft}`, { fontSize: '32px', fill: '#000' });
-
-        this.timedEvent = this.time.addEvent({
-            delay: 1000,
-            callback: this.onSecond,
-            callbackScope: this,
-            loop: true
-        });
-
-        // Timer para spawnar itens
-        this.spawnTimer = this.time.addEvent({
-            delay: 1500,
-            callback: this.spawnItem,
-            callbackScope: this,
-            loop: true
-        });
-
-        // Física: colisão player e chão
-        this.physics.add.collider(this.player, this.ground);
-
-        // Sobreposição para pegar item
+        // Colisão player x itens
         this.physics.add.overlap(this.player, this.items, this.collectItem, null, this);
+
+        // Pontuação
+        this.score = 0;
+        this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+
+        // Input
+        this.isPressing = false;
+        this.input.on('pointerdown', () => {
+            this.isPressing = true;
+            this.player.setVelocityY(-300);
+        });
+        this.input.on('pointerup', () => {
+            this.isPressing = false;
+        });
+
+        // Gerar itens
+        this.time.addEvent({
+            delay: 1500,
+            callback: this.generateItem,
+            callbackScope: this,
+            loop: true
+        });
+
+        // Física do jogador
+        this.player.body.setAllowGravity(true);
     }
 
     update() {
-        // Movimenta o chão para esquerda para simular corrida
-        this.ground.x -= 3;
-        if (this.ground.x < 0) this.ground.x = 800; // loop do chão
+        this.ground.tilePositionX += 5;
 
-        // Movimenta itens para a esquerda
-        this.items.children.iterate(item => {
-            if (item) {
-                item.x -= 3;
+        if (this.isPressing) {
+            this.player.setVelocityY(-300);
+        }
 
-                // Remove item que saiu da tela
-                if (item.x < -20) {
-                    item.destroy();
-                }
-            }
-        });
+        if (this.player.y < 25) {
+            this.player.y = 25;
+            this.player.setVelocityY(0);
+        }
     }
 
-    spawnItem() {
-        // Cria um item do lado direito, em altura aleatória
-        const y = Phaser.Math.Between(400, 520);
-        const item = this.add.circle(820, y, 15, 0x0000ff);
-        this.physics.add.existing(item);
-        item.body.allowGravity = false;
-        this.items.add(item);
+    generateItem() {
+        if (!this.textures.exists('itemTexture')) {
+            const itemGraphics = this.add.graphics();
+            itemGraphics.fillStyle(0xff0000, 1);
+            itemGraphics.fillCircle(15, 15, 15);
+            itemGraphics.generateTexture('itemTexture', 30, 30);
+            itemGraphics.destroy();
+        }
+
+        const x = this.scale.width + 30;
+        const y = Phaser.Math.Between(50, this.scale.height - 100);
+        const item = this.items.create(x, y, 'itemTexture');
+        item.setVelocityX(-200);
+        item.body.setAllowGravity(false);
+        item.setSize(30, 30);
+        item.checkWorldBounds = true;
+        item.outOfBoundsKill = true;
+        item.body.world.on('worldbounds', (body) => {
+            if (body.gameObject === item) {
+                item.destroy();
+            }
+        });
     }
 
     collectItem(player, item) {
         item.destroy();
         this.score++;
-        this.scoreText.setText('Itens: ' + this.score);
-    }
-
-    onSecond() {
-        this.timeLeft--;
-        this.timerText.setText('Tempo: ' + this.timeLeft);
-
-        if (this.timeLeft <= 0) {
-            this.scene.restart();
-            alert(`Fim do tempo! Você coletou ${this.score} itens.`);
-        }
+        this.scoreText.setText('Score: ' + this.score);
     }
 }
 
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    backgroundColor: '#aaddff',
+    width: window.innerWidth,
+    height: window.innerHeight,
+    backgroundColor: '#87CEEB', // cor azul clara tipo céu
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 600 },
+            gravity: { y: 800 }, // gravidade para o quadrado cair
             debug: false
         }
     },
-    parent: 'game-container',
-    scene: [GameScene]
+    scene: [MenuScene, GameScene]
 };
 
 let game;
@@ -115,7 +176,6 @@ function startGame() {
 
     const elemento = document.getElementById('quiz');
     const messageDiv = document.getElementById('messageDiv');
-
 
     // Remove o elemento, se ele existir
     if (elemento) {

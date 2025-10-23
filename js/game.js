@@ -54,14 +54,15 @@ class GameScene extends Phaser.Scene {
 
         // Itens comuns
         this.load.image('msn', 'resources/game/items/msn.png');
+        this.load.image('coracao', 'resources/game/items/coracao.png');
 
         // Itens especiais
-        this.load.image('coracao', 'resources/game/items/coracao.png');
+        this.load.image('mensagem-msn', 'resources/game/items/mensagem-msn.png');
     }
 
     create() {
         this.cameras.main.setBackgroundColor('#87CEEB');
-        showSceneTitleAndPause(this, 'Faze 1 - Conselheiro Mafra: O começo!', 2000);
+        showSceneTitleAndPause(this, 'Se leu mamou!', 2000);
 
         // ------------------ CHÃO ------------------
         const groundHeight = 25;
@@ -99,7 +100,7 @@ class GameScene extends Phaser.Scene {
 
         // Gatilhos para itens especiais
         this.specialItemTriggers = [
-            { score: 5, key: 'coracao', shown: false, message: 'Você encontrou o Coração da Amizade!' }
+            { score: 5, key: 'mensagem-msn', shown: false, message: 'Após muitas mensagem e aproximação, abrimos nosso coração!' }
         ];
 
         // Geração contínua de itens
@@ -115,7 +116,7 @@ class GameScene extends Phaser.Scene {
 
         // ------------------ INTERFACE ------------------
         this.score = 0;
-        this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+        this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '25px', fill: '#000' });
 
         // ------------------ CONTROLE ------------------
         this.isPressing = false;
@@ -217,42 +218,59 @@ class GameScene extends Phaser.Scene {
 
     // ------------------ MODAL ESPECIAL ------------------
     showSpecialItemModal(itemKey, message) {
-        // Pausa somente a física (mantém os inputs ativos)
         this.physics.world.pause();
 
-        // Container do modal
         const modalGroup = this.add.container(0, 0).setDepth(1000);
 
         // Fundo escurecido
         const bg = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.6)
             .setOrigin(0)
-            .setInteractive(); // evita cliques passarem por baixo
+            .setInteractive();
         modalGroup.add(bg);
 
-        // Janela central
-        const modalWidth = 400;
-        const modalHeight = 300;
-        const modalBg = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, modalWidth, modalHeight, 0xffffff, 1)
+        // Definindo tamanho máximo da modal (80% da tela)
+        const maxModalWidth = this.scale.width * 0.8;
+        const maxModalHeight = this.scale.height * 0.8;
+
+        // Janela modal (dimensões flexíveis, vamos ajustar com base na imagem e texto)
+        const modalBg = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, maxModalWidth, maxModalHeight, 0xffffff, 1)
             .setStrokeStyle(4, 0x000000)
             .setOrigin(0.5);
         modalGroup.add(modalBg);
 
-        // Imagem do item
-        const itemImage = this.add.image(this.scale.width / 2, this.scale.height / 2 - 60, itemKey)
-            .setDisplaySize(80, 80);
+        // Criar imagem mas ainda sem definir escala
+        const itemImage = this.add.image(0, 0, itemKey);
         modalGroup.add(itemImage);
 
-        // Texto
-        const modalText = this.add.text(this.scale.width / 2, this.scale.height / 2 + 20, message, {
+        // Obter tamanho natural da imagem
+        const naturalWidth = itemImage.width;
+        const naturalHeight = itemImage.height;
+
+        // Definir área máxima para imagem na modal (digamos 60% da altura da modal e 90% da largura)
+        const maxImageWidth = maxModalWidth * 0.9;
+        const maxImageHeight = maxModalHeight * 0.6;
+
+        // Calcular escala mantendo proporção para caber na área máxima
+        const scaleX = maxImageWidth / naturalWidth;
+        const scaleY = maxImageHeight / naturalHeight;
+        const scale = Math.min(scaleX, scaleY, 1); // não aumenta se a imagem for menor que a área
+
+        itemImage.setScale(scale);
+
+        // Posicionar a imagem na modal, um pouco acima do centro para deixar espaço para o texto
+        itemImage.setPosition(this.scale.width / 2, this.scale.height / 2 - maxModalHeight * 0.15);
+
+        // Texto abaixo da imagem
+        const modalText = this.add.text(this.scale.width / 2, this.scale.height / 2 + maxModalHeight * 0.25, message, {
             fontSize: '20px',
             fill: '#000',
             align: 'center',
-            wordWrap: { width: modalWidth - 40 }
+            wordWrap: { width: maxModalWidth * 0.9 }
         }).setOrigin(0.5);
         modalGroup.add(modalText);
 
         // Botão "Continuar"
-        const button = this.add.text(this.scale.width / 2, this.scale.height / 2 + 100, 'Continuar ▶', {
+        const button = this.add.text(this.scale.width / 2, this.scale.height / 2 + maxModalHeight * 0.4, 'Continuar ▶', {
             fontSize: '24px',
             fill: '#007BFF',
             backgroundColor: '#fff',
@@ -263,13 +281,11 @@ class GameScene extends Phaser.Scene {
         button.on('pointerover', () => button.setStyle({ fill: '#0056b3' }));
         button.on('pointerout', () => button.setStyle({ fill: '#007BFF' }));
 
-        // ✅ Retoma o jogo ao clicar
         button.on('pointerdown', () => {
             modalGroup.destroy();
-            this.physics.world.resume(); // volta a física
+            this.physics.world.resume();
         });
 
-        // Efeito de fade in para o modal (suaviza a aparição)
         modalGroup.setAlpha(0);
         this.tweens.add({
             targets: modalGroup,

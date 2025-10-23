@@ -59,13 +59,7 @@ class GameScene extends Phaser.Scene {
 
         this.ground = this.add.tileSprite(0, this.scale.height - 50, this.scale.width * 2, 50, 'ground').setOrigin(0);
 
-        // Criar player com a cor escolhida
-        // const playerGraphics = this.add.graphics();
-        // playerGraphics.fillStyle(this.playerColor, 1);
-        // playerGraphics.fillRect(0, 0, 50, 50);
-        // playerGraphics.generateTexture('playerTexture', 50, 50);
-        // playerGraphics.destroy();
-
+        // Adiciona o jogador
         this.player = this.physics.add.sprite(100, this.scale.height - 100, this.playerImageKey);
         this.player.setCollideWorldBounds(true);
 

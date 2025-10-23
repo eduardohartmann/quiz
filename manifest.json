@@ -16,7 +16,7 @@
         }
     ],
     "orientation": "landscape",
-    "display": "standalone",
+    "display": "fullscreen",
     "dir": "auto",
     "lang": "pt-BR",
     "name": "Refúgio Vista da Montanha",

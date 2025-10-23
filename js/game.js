@@ -74,7 +74,7 @@ class GameScene extends Phaser.Scene {
 
     create() {
         this.cameras.main.setBackgroundColor('#87CEEB');
-        showSceneTitleAndPause(this, 'Se leu mamou!', 2000);
+        showSceneTitleAndPause(this, 'Se leu mamou!', 1000);
 
         this.lastSpecialScore = 0;  // Guarda o score no momento da última coleta especial
 
@@ -131,12 +131,13 @@ class GameScene extends Phaser.Scene {
         ];
 
         // Geração contínua de itens
-        this.time.addEvent({
+        this.itemGenerationTimer = this.time.addEvent({
             delay: 1500,
             callback: this.generateItem,
             callbackScope: this,
             loop: true
         });
+
 
         this.physics.add.overlap(this.player, this.items, this.collectItem, null, this);
         this.physics.add.overlap(this.player, this.specialItems, this.collectSpecialItem, null, this);
@@ -280,6 +281,7 @@ class GameScene extends Phaser.Scene {
     // ------------------ MODAL ESPECIAL ------------------
     showSpecialItemModal(itemKey, message) {
         this.physics.world.pause();
+        this.itemGenerationTimer.paused = true;
 
         const modalGroup = this.add.container(0, 0).setDepth(1000);
 
@@ -345,9 +347,11 @@ class GameScene extends Phaser.Scene {
         button.on('pointerdown', () => {
             modalGroup.destroy();
             this.physics.world.resume();
+            this.itemGenerationTimer.paused = false;
         });
 
         modalGroup.setAlpha(0);
+
         this.tweens.add({
             targets: modalGroup,
             alpha: 1,

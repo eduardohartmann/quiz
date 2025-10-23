@@ -76,6 +76,8 @@ class GameScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#87CEEB');
         showSceneTitleAndPause(this, 'Se leu mamou!', 2000);
 
+        this.lastSpecialScore = 0;  // Guarda o score no momento da última coleta especial
+
         // ------------------ CHÃO ------------------
         const groundHeight = 25;
         const groundWidth = this.scale.width * 2;
@@ -112,20 +114,20 @@ class GameScene extends Phaser.Scene {
 
         // Gatilhos para itens especiais
         this.specialItemTriggers = [
-            { score: 5, key: 'especial-1', shown: false, message: 'Após muitas mensagens e aproximação, abrimos nosso coração!' },
-            { score: 10, key: 'especial-2', shown: false, message: 'Algumas mensagens no caderno' },
-            { score: 15, key: 'especial-3', shown: false, message: 'Nossa primeira foto' },
-            { score: 20, key: 'especial-4', shown: false, message: 'Talvez a primeira viagem (como eu era feio)' },
-            { score: 25, key: 'especial-5', shown: false, message: 'Participamos de várias festas aleatórias' },
-            { score: 30, key: 'especial-6', shown: false, message: 'Entramos na UDESC' },
-            { score: 35, key: 'especial-7', shown: false, message: 'Saimos da UDESC' },
-            { score: 40, key: 'especial-8', shown: false, message: 'Começamos a ganhar dinheiro e ir mais longe' },
-            { score: 45, key: 'especial-9', shown: false, message: 'Compramos nosso partamento' },
-            { score: 50, key: 'especial-10', shown: false, message: 'Vimos ele ser construido' },
-            { score: 55, key: 'especial-11', shown: false, message: 'Passamos nosso primeiro natal' },
-            { score: 60, key: 'especial-12', shown: false, message: 'Adotamos um anjo' },
-            { score: 65, key: 'especial-13', shown: false, message: 'Será que é um anjo?' },
-            { score: 70, key: 'especial-14', shown: false, message: 'E agora? Qual é o próximo passo?' }
+            { score: 5, key: 'especial-1', shown: false, collected: false, message: 'Após muitas mensagens e aproximação, abrimos nosso coração!' },
+            { score: 5, key: 'especial-2', shown: false, collected: false, message: 'Algumas mensagens no caderno' },
+            { score: 5, key: 'especial-3', shown: false, collected: false, message: 'Nossa primeira foto' },
+            { score: 5, key: 'especial-4', shown: false, collected: false, message: 'Talvez a primeira viagem (como eu era feio)' },
+            { score: 5, key: 'especial-5', shown: false, collected: false, message: 'Participamos de várias festas aleatórias' },
+            { score: 5, key: 'especial-6', shown: false, collected: false, message: 'Entramos na UDESC' },
+            { score: 5, key: 'especial-7', shown: false, collected: false, message: 'Saimos da UDESC' },
+            { score: 5, key: 'especial-8', shown: false, collected: false, message: 'Começamos a ganhar dinheiro e ir mais longe' },
+            { score: 5, key: 'especial-9', shown: false, collected: false, message: 'Compramos nosso partamento' },
+            { score: 5, key: 'especial-10', shown: false, collected: false, message: 'Vimos ele ser construido' },
+            { score: 5, key: 'especial-11', shown: false, collected: false, message: 'Passamos nosso primeiro natal' },
+            { score: 5, key: 'especial-12', shown: false, collected: false, message: 'Adotamos um anjo' },
+            { score: 5, key: 'especial-13', shown: false, collected: false, message: 'Será que é um anjo?' },
+            { score: 15, key: 'especial-14', shown: false, collected: false, message: 'E agora? Qual é o próximo passo?' }
         ];
 
         // Geração contínua de itens
@@ -178,7 +180,9 @@ class GameScene extends Phaser.Scene {
                 const key = item.getData('key');
                 item.destroy();
                 const trigger = this.specialItemTriggers.find(t => t.key === key);
-                if (trigger) trigger.shown = false;
+                if (trigger && !trigger.collected) {
+                    trigger.shown = false;
+                }
             }
         });
     }
@@ -188,26 +192,53 @@ class GameScene extends Phaser.Scene {
         const x = this.scale.width + 30;
         const y = Phaser.Math.Between(50, this.scale.height - 150);
 
-        // verifica se deve gerar um item especial
-        const specialTrigger = this.specialItemTriggers.find(t => t.score === this.score && !t.shown);
-        if (specialTrigger) {
-            specialTrigger.shown = true;
+        // Primeiro, verifique qual é o próximo item especial que deve aparecer
+        // A lista de triggers está ordenada (por score), então pega o primeiro que ainda não foi coletado
+        // e que o score já alcançou o limite considerando o score na hora da coleta do anterior
 
-            const special = this.specialItems.create(x, y, specialTrigger.key);
-            special.setVelocityX(-250);
-            special.body.setAllowGravity(false);
+        // Encontrar índice do último item especial coletado
+        const lastCollectedIndex = this.specialItemTriggers.findIndex(t => !t.collected) - 1;
 
-            // tamanho do colisor e imagem (mesmo valor)
-            const { width, height } = this.specialItemSize;
-            special.body.setSize(width, height);
-            special.setDisplaySize(width, height);
+        // Se não coletou nenhum, lastCollectedIndex será -1 (quer dizer que pode aparecer o primeiro item)
+        // O próximo item a aparecer é o que está na posição lastCollectedIndex + 1
+        const nextIndex = lastCollectedIndex + 1;
 
-            special.setData('key', specialTrigger.key);
-            special.setData('message', specialTrigger.message);
-            return;
+        if (nextIndex >= 0 && nextIndex < this.specialItemTriggers.length) {
+            const nextItem = this.specialItemTriggers[nextIndex];
+
+            // Condição para aparecer:
+            // score atual >= score do último item coletado + score do próximo item especial
+            // Se não coletou nenhum, lastSpecialScore pode ser zero (ou -1, ajustar se precisar)
+            const lastScore = lastCollectedIndex >= 0 ? this.lastSpecialScore : 0;
+
+            if (this.score >= lastScore + nextItem.score && !nextItem.shown && !nextItem.collected) {
+                nextItem.shown = true;
+
+                const special = this.specialItems.create(x, y, nextItem.key);
+                special.setVelocityX(-250);
+                special.body.setAllowGravity(false);
+
+                const { width, height } = this.specialItemSize;
+                special.body.setSize(width, height);
+                special.setDisplaySize(width, height);
+
+                special.setData('key', nextItem.key);
+                special.setData('message', nextItem.message);
+
+                this.tweens.add({
+                    targets: special,
+                    tint: { from: 0xffffff, to: 0xffff99 },  // branco para amarelo claro
+                    duration: 800,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+
+                return;
+            }
         }
 
-        // gera item comum
+        // Caso não gere especial, gera item comum
         const randomKey = Phaser.Utils.Array.GetRandom(this.itemImages);
         const item = this.items.create(x, y, randomKey);
         item.setVelocityX(-200);
@@ -219,6 +250,7 @@ class GameScene extends Phaser.Scene {
 
         item.setCollideWorldBounds(false);
     }
+
 
     // ------------------ COLETAR ITENS ------------------
     collectItem(player, item) {
@@ -233,14 +265,17 @@ class GameScene extends Phaser.Scene {
         item.destroy();
 
         const trigger = this.specialItemTriggers.find(t => t.key === key);
-        if (trigger) trigger.shown = false;
+        if (trigger) {
+            trigger.collected = true;  // não reaparece mais
+            trigger.shown = true;      // manter como mostrado
+        }
 
-        this.score += 5; // bônus
-        this.scoreText.setText(`Score: ${this.score}`);
+        this.lastSpecialScore = this.score; // guarda o score atual para o próximo cálculo
 
         // Pausar jogo e mostrar modal
         this.showSpecialItemModal(key, message);
     }
+
 
     // ------------------ MODAL ESPECIAL ------------------
     showSpecialItemModal(itemKey, message) {

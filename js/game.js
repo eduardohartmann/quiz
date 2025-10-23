@@ -53,7 +53,6 @@ class GameScene extends Phaser.Scene {
         this.load.image('cueio', 'resources/game/character/cueio.png');
 
         // Itens comuns
-        this.load.image('msn', 'resources/game/items/msn.png');
         this.load.image('coracao', 'resources/game/items/coracao.png');
 
         // Itens especiais
@@ -92,7 +91,7 @@ class GameScene extends Phaser.Scene {
         this.items = this.physics.add.group();
         this.specialItems = this.physics.add.group();
 
-        this.itemImages = ['msn']; // itens comuns
+        this.itemImages = ['coracao']; // itens comuns
 
         // Tamanhos fixos (o colisor define o tamanho da imagem)
         this.itemSize = { width: 30, height: 30 };
@@ -178,6 +177,7 @@ class GameScene extends Phaser.Scene {
             special.setDisplaySize(width, height);
 
             special.setData('key', specialTrigger.key);
+            special.setData('message', specialTrigger.message);
             return;
         }
 
